@@ -51,7 +51,7 @@ export const PRIORITIES = [
   'Komunikasi dan koordinasi tim IT', 'CCTV dan perangkat pendukung', 'Lainnya'
 ];
 export const SUPPORT_OPTIONS = ['Sangat Mendukung', 'Mendukung', 'Cukup Mendukung', 'Kurang Mendukung', 'Tidak Mendukung'];
-export const RATING_LABELS = ['Sangat Tidak Puas', 'Tidak Puas', 'Cukup Puas', 'Puas', 'Sangat Puas'];
+export const RATING_LABELS = ['Sangat Tidak Puas', 'Tidak Puas', 'Cukup Puas', 'Puas', 'Puas Sekali', 'Sangat Puas'];
 export const ICONS = {
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
   tool: '<path d="M14.5 6.3a5 5 0 0 0-6.2 6.2L3 17.8 6.2 21l5.3-5.3a5 5 0 0 0 6.2-6.2L14 12l-2-2 2.5-3.7Z"/>',
