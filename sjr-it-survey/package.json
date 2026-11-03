@@ -1,0 +1,14 @@
+{
+  "name": "sjr-it-voice-survey",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Survei kepuasan layanan IT PT SJR dengan Netlify Functions dan PostgreSQL Netlify Database",
+  "scripts": {
+    "build": "node scripts/check.mjs"
+  },
+  "dependencies": {
+    "@netlify/database": "^2.0.1"
+  },
+  "engines": {"node": ">=22"}
+}
