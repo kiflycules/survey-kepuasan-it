@@ -1,6 +1,6 @@
 import { put } from '@vercel/blob';
 import { randomUUID } from 'node:crypto';
-import { QUESTION_IDS, SUPPORT_OPTIONS, PRIORITIES } from '../../public/assets/questions.js';
+import { QUESTION_IDS, SUPPORT_OPTIONS, PRIORITIES } from '../public/assets/questions.js';
 
 const headers = {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
 const json = (data,status=200) => new Response(JSON.stringify(data),{status,headers});
