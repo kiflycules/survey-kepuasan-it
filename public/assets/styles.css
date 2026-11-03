@@ -6,3 +6,95 @@
 @media (max-width:750px){.site-header{height:78px;padding:0 18px}.header-year,.header-back{display:none}.header-chip{padding:8px 10px;font-size:9px}.page-wrap,.admin-main{padding:0 14px 35px}.hero{padding:34px 26px;min-height:300px}.hero h1{letter-spacing:-1.3px;font-size:39px}.hero p{font-size:12px;max-width:100%}.hero-art{display:none}.hero-metadata{gap:8px 16px;margin-top:23px;font-size:10px}.survey-shell{display:block;min-height:0;margin-top:16px}.survey-sidebar{border-right:none;border-bottom:1px solid #e6eeee;padding:23px 22px 13px}.step-nav{flex-direction:row;padding:19px 0 7px;gap:4px;justify-content:space-between}.step-nav-item{flex:1;display:flex;align-items:center;justify-content:center;padding:7px 2px;flex-direction:column;gap:4px}.step-nav-item strong{font-size:9px;text-align:center}.step-nav-item small,.sidebar-note{display:none}.step-number{height:27px;width:27px;border-radius:8px;font-size:10px}.survey-content{padding:25px 20px}.survey-head h2{font-size:24px}.survey-head-dots{display:none}.field-grid{grid-template-columns:1fr;gap:18px}.field.full{grid-column:auto}.value-strip{padding:27px 6px 5px;grid-template-columns:1fr;gap:17px}.site-footer{padding:21px 19px 28px;flex-direction:column;gap:7px}.dashboard-heading{flex-direction:column;align-items:flex-start}.filter-bar{display:grid;grid-template-columns:1fr 1fr;gap:14px}.filter-label{grid-column:1/-1;padding:0}.clear-filter{justify-self:start}.dashboard-grid{grid-template-columns:1fr}.question-rows{grid-template-columns:1fr}.feedback-list{grid-template-columns:1fr}.data-card{padding:19px}.stat-card{padding:17px;min-height:139px}.stat-card strong{font-size:29px}}
 @media (max-width:480px){.brand-name strong{font-size:21px}.brand-name small{font-size:7px;letter-spacing:.8px}.brand-symbol{height:39px;width:39px}.brand-symbol-inner{font-size:22px}.header-chip{font-size:8px}.hero{padding:29px 22px}.hero h1{font-size:32px}.hero-eyebrow{font-size:9px;letter-spacing:1.5px}.hero-metadata span{white-space:nowrap}.survey-sidebar{padding:19px 15px 9px}.survey-content{padding:21px 14px}.survey-head{padding-bottom:18px}.step-nav-item strong{font-size:8px}.rating-options{gap:4px}.rating-choice{min-height:51px}.rating-choice span{font-size:14px}.rating-choice small{font-size:8px}.question-card{padding:14px 10px}.question-text{font-size:11px}.rating-help{font-size:8px}.overall-question{padding:15px}.overall-rating{gap:5px}.overall-item{padding:11px 2px}.overall-item small{font-size:8px}.overall-item .star{font-size:18px}.priority-choices,.support-choices{grid-template-columns:1fr}.btn{padding:11px 14px;font-size:11px}.success-panel h2{font-size:27px}.dashboard-actions{width:100%}.dashboard-actions .btn{flex:1}.filter-bar{grid-template-columns:1fr}.filter-label{grid-column:auto}.stat-grid{gap:9px}.stat-card .stat-label{font-size:8px}.stat-card .stat-hint{font-size:9px}.stat-card strong{font-size:26px}.stat-decoration{opacity:.22}.login-card{padding:34px 23px}}
 .step-actions #nextBtn{margin-left:auto}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-decoration: none;
+}
+
+.brand-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 4px;
+  box-shadow: 0 8px 24px rgba(11, 32, 56, 0.08);
+}
+
+.brand-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand-name strong {
+  font-size: 22px;
+  line-height: 1;
+  color: #0b2038;
+}
+
+.brand-name small {
+  font-size: 12px;
+  letter-spacing: 1.6px;
+  color: #75879a;
+  font-weight: 700;
+}
+
+.header-end {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: #0b2038;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 20px rgba(11, 32, 56, 0.18);
+}
+
+.admin-btn:hover {
+  background: #12365d;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .site-header {
+    gap: 14px;
+  }
+
+  .brand-logo {
+    width: 52px;
+    height: 52px;
+  }
+
+  .brand-name strong {
+    font-size: 18px;
+  }
+
+  .brand-name small {
+    font-size: 10px;
+    letter-spacing: 1.2px;
+  }
+
+  .header-end {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .admin-btn {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}
