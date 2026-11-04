@@ -19,11 +19,11 @@ async function handle(request) {
   const support=clean(body.support,40), priority=clean(body.priority,100);
   const issues=clean(body.issues,1000), suggestion=clean(body.suggestion,1500);
   const overall=body.overall;
-  if(!department || !location || !Number.isInteger(overall) || overall<1 || overall>5 || !SUPPORT_OPTIONS.includes(support) || !PRIORITIES.includes(priority)) {
+  if(!department || !location || !Number.isInteger(overall) || overall<1 || overall>6 || !SUPPORT_OPTIONS.includes(support) || !PRIORITIES.includes(priority)) {
     return json({error:'Mohon lengkapi identitas kerja dan penilaian akhir.'},400);
   }
   const input=body.ratings;
-  if(!input || typeof input!=='object' || Array.isArray(input) || Object.keys(input).length!==QUESTION_IDS.length || !QUESTION_IDS.every(id=>Number.isInteger(input[id]) && input[id]>=0 && input[id]<=5)){
+  if(!input || typeof input!=='object' || Array.isArray(input) || Object.keys(input).length!==QUESTION_IDS.length || !QUESTION_IDS.every(id=>Number.isInteger(input[id]) && input[id]>=0 && input[id]<=6)){
     return json({error:'Semua pertanyaan penilaian harus diisi (pilih N/A bila tidak relevan).'},400);
   }
   const ratings=Object.fromEntries(QUESTION_IDS.map(id=>[id,input[id]]));
