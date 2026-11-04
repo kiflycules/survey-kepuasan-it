@@ -93,7 +93,7 @@ function renderTrend(){
 function renderQuestions(){
   $('questionRows').innerHTML=GROUPS.flatMap(g=>g.questions.map(([id,label])=>{
     const values=ratingValues([id]),v=avg(values);
-    return `<div class="question-insight"><div class="question-insight-top"><span>${escapeHtml(label)}</span><b>${values.length?v.toFixed(2).replace('.',','):'—'}</b></div><div class="meter-track"><span style="width:${v*100/6%}"></span></div><small>${values.length} penilaian valid · N/A dikecualikan</small></div>`;
+    return `<div class="question-insight"><div class="question-insight-top"><span>${escapeHtml(label)}</span><b>${values.length?v.toFixed(2).replace('.',','):'—'}</b></div><div class="meter-track"><span style="width:${v*100/6}%"></span></div><small>${values.length} penilaian valid · N/A dikecualikan</small></div>`;
   })).join('');
 }
 function renderFeedback(){
