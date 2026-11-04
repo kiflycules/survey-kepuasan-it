@@ -98,3 +98,51 @@
     font-size: 13px;
   }
 }
+
+
+/* Tampilan pilihan skala kepuasan 1-6 + N/A */
+.rating-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rating-choice {
+  min-height: 78px;
+  padding: 10px 6px;
+  text-align: center;
+}
+
+.rating-choice small {
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 650;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Penilaian keseluruhan */
+.overall-rating {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.overall-item small {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* Tampilan HP */
+@media (max-width: 600px) {
+  .rating-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .overall-rating {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Warna nilai 6 pada grafik admin */
+.distribution-row:nth-child(6) .distribution-track span {
+  background: #138d78;
+}
