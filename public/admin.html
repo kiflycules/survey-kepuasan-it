@@ -29,7 +29,16 @@
     <div class="header-end"><a href="/" class="header-back">← Kembali ke Survei</a><span class="header-chip">ADMIN CONSOLE</span></div>
   </header>
   <main class="admin-main">
-    <section id="loginPanel" class="login-wrap" hidden><div class="login-card"><div class="login-illustration">◈</div><span class="eyebrow-small">RESTRICTED ACCESS</span><h1>Dashboard Admin<span class="dot">.</span></h1><p>Masuk untuk melihat hasil survei kepuasan layanan IT SJR.</p><form id="loginForm"><label for="adminPassword">Kata sandi admin</label><input type="password" id="adminPassword" name="password" autocomplete="current-password" placeholder="Masukkan kata sandi" required minlength="12" /><button class="btn btn-primary full-width" type="submit" id="loginBtn">Masuk ke Dashboard →</button></form><p id="loginError" class="form-error" hidden role="alert"></p><small class="login-footnote">Akses khusus pengelola survei IT SJR.</small></div></section>
+    <section id="loginPanel" class="login-wrap" hidden><div class="login-card">
+<div class="login-illustration"
+     style="background:#ffffff; border:1px solid #e6edf0;">
+  <img
+    src="/assets/logo-sjr.png"
+    alt="Logo SJR"
+    style="width:62px; height:62px; object-fit:contain;"
+  />
+</div>
+<span class="eyebrow-small">RESTRICTED ACCESS</span><h1>Dashboard Admin<span class="dot">.</span></h1><p>Masuk untuk melihat hasil survei kepuasan layanan IT SJR.</p><form id="loginForm"><label for="adminPassword">Kata sandi admin</label><input type="password" id="adminPassword" name="password" autocomplete="current-password" placeholder="Masukkan kata sandi" required minlength="12" /><button class="btn btn-primary full-width" type="submit" id="loginBtn">Masuk ke Dashboard →</button></form><p id="loginError" class="form-error" hidden role="alert"></p><small class="login-footnote">Akses khusus pengelola survei IT SJR.</small></div></section>
     <section id="dashboardPanel" hidden>
       <div class="dashboard-heading"><div><span class="hero-eyebrow admin-eyebrow">IT SERVICE INTELLIGENCE</span><h1>Survey <span>Analytics.</span></h1><p>Ukur persepsi karyawan dan pantau area yang perlu ditingkatkan.</p></div><div class="dashboard-actions"><button id="refreshBtn" class="btn btn-ghost">↻ &nbsp; Refresh</button><button id="exportBtn" class="btn btn-primary">↓ &nbsp; Export CSV</button><button id="logoutBtn" class="btn btn-outline">Keluar</button></div></div>
       <div class="filter-bar"><div class="filter-label">FILTER DATA</div><label>Departemen<select id="filterDepartment"></select></label><label>Lokasi kerja<select id="filterLocation"></select></label><label>Periode<input type="month" id="filterMonth" /></label><button id="clearFilters" type="button" class="clear-filter">Reset filter</button></div>
