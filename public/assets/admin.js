@@ -48,12 +48,12 @@ function renderDashboard(){
   const average=n?rows.reduce((sum,r)=>sum+Number(r.overall),0)/n:0;
   $('statTotal').textContent=n.toLocaleString('id-ID')+(truncated?'+':'');
   $('statCsat').textContent=n?`${percent(happy,n)}%`:'—';
-  $('statAvg').textContent=n?`${average.toFixed(2).replace('.',',')} / 5`:'—';
+  $('statAvg').textContent=n?`${average.toFixed(2).replace('.',',')} / 6`:'—';
   $('statHappy').textContent=happy.toLocaleString('id-ID');
   $('responseCount').textContent=`${n.toLocaleString('id-ID')} jawaban${truncated?' (dibatasi)':''}`;
   renderAspects();renderDistribution();renderPriorities();renderTrend();renderQuestions();renderFeedback();renderTable();
 }
-function ratingValues(ids){return rows.flatMap(r=>ids.map(id=>Number(r.ratings?.[id]||0)).filter(v=>Number.isInteger(v)&&v>=1&&v<=5));}
+function ratingValues(ids){return rows.flatMap(r=>ids.map(id=>Number(r.ratings?.[id]||0)).filter(v=>Number.isInteger(v)&&v>=1&&v<=6));}
 function avg(nums){return nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:0;}
 function renderAspects(){
   $('aspectBars').innerHTML=GROUPS.map(g=>{
@@ -93,7 +93,7 @@ function renderTrend(){
 function renderQuestions(){
   $('questionRows').innerHTML=GROUPS.flatMap(g=>g.questions.map(([id,label])=>{
     const values=ratingValues([id]),v=avg(values);
-    return `<div class="question-insight"><div class="question-insight-top"><span>${escapeHtml(label)}</span><b>${values.length?v.toFixed(2).replace('.',','):'—'}</b></div><div class="meter-track"><span style="width:${v*20}%"></span></div><small>${values.length} penilaian valid · N/A dikecualikan</small></div>`;
+    return `<div class="question-insight"><div class="question-insight-top"><span>${escapeHtml(label)}</span><b>${values.length?v.toFixed(2).replace('.',','):'—'}</b></div><div class="meter-track"><span style="width:${v*100/6%"></span></div><small>${values.length} penilaian valid · N/A dikecualikan</small></div>`;
   })).join('');
 }
 function renderFeedback(){
@@ -110,7 +110,7 @@ function exportCsv(){
   if(!rows.length){notice('Tidak ada data untuk diekspor.');return;}
   const cols=[['Tanggal WITA',r=>dateFormat(r.created_at)],['Nama',r=>r.name||'Anonim'],['Departemen',r=>r.department],['Lokasi',r=>r.location],
     ...GROUPS.flatMap(g=>g.questions.map(([id,label])=>[`${g.title}: ${label}`,r=>r.ratings?.[id]===0?'N/A':(r.ratings?.[id]??'')])),
-    ['Nilai Kepuasan Keseluruhan (1-5)',r=>r.overall],['Dukungan IT',r=>r.support],['Kendala',r=>r.issues],['Prioritas Perbaikan',r=>r.priority],['Saran',r=>r.suggestion]];
+    ['Nilai Kepuasan Keseluruhan (1-6)',r=>r.overall],['Dukungan IT',r=>r.support],['Kendala',r=>r.issues],['Prioritas Perbaikan',r=>r.priority],['Saran',r=>r.suggestion]];
   const data=[cols.map(c=>csvSafe(c[0])).join(','),...rows.map(r=>cols.map(c=>csvSafe(c[1](r))).join(','))].join('\r\n');
   const blob=new Blob(['\uFEFF'+data],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=`SJR_IT_Survey_${new Date().toISOString().slice(0,10)}.csv`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
