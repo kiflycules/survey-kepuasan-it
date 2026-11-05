@@ -44,7 +44,7 @@ export const GROUPS = [
 
 export const QUESTION_IDS = GROUPS.flatMap(group => group.questions.map(item => item[0]));
 export const DEPARTMENTS = ['DEPT HCGS', 'DEPT SHE', 'DEPT MET', 'DEPT PCM', 'DEPT GEE', 'DEPT MSM', 'DEPT CSR', 'DEPT FAC', 'DEPT CPMD', 'DEPT IOT', 'DEPT COLE', 'Lainnya'];
-export const LOCATIONS = ['OPP', 'Pangulir', 'Mess Muara', 'Mess Mineral', 'Lainnya'];
+export const LOCATIONS = ['HO', 'SITE'];
 export const PRIORITIES = [
   'Kecepatan respons dan penanganan', 'Kualitas jaringan internet / Wi-Fi',
   'Komputer, laptop, dan printer', 'Aplikasi dan sistem internal',
