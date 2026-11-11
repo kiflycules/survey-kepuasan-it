@@ -22,7 +22,7 @@ function optionsHtml(items, selected, placeholder) {
   return `<option value="">${escapeHtml(placeholder)}</option>` + items.map(item => `<option value="${escapeHtml(item)}" ${selected===item?'selected':''}>${escapeHtml(item)}</option>`).join('');
 }
 function navHtml(){
-  return steps.map(([name,sub], i) => `<div class="step-nav-item ${i===state.step?'active':i<state.step?'done':''}" ${i===state.step?'aria-current="step"':''}><span class="step-number">${i<state.step?'?':String(i+1).padStart(2,'0')}</span><span><strong>${name}</strong><small>${sub}</small></span></div>`).join('');
+  return steps.map(([name,sub], i) => `<div class="step-nav-item ${i===state.step?'active':i<state.step?'done':''}" ${i===state.step?'aria-current="step"':''}><span class="step-number">${i<state.step?'✓':String(i+1).padStart(2,'0')}</span><span><strong>${name}</strong><small>${sub}</small></span></div>`).join('');
 }
 function profileHtml(){
   return `<div class="field-grid">
@@ -32,7 +32,7 @@ function profileHtml(){
     <div class="field full" id="otherDepartmentBox" ${state.departmentChoice==='Lainnya'?'':'hidden'}><label for="otherDepartment">Nama departemen lainnya <span class="required-star">*</span></label><input id="otherDepartment" maxlength="60" placeholder="Tuliskan departemen" value="${escapeHtml(state.departmentOther)}"></div>
     <div class="field full" id="otherLocationBox" ${state.locationChoice==='Lainnya'?'':'hidden'}><label for="otherLocation">Lokasi kerja lainnya <span class="required-star">*</span></label><input id="otherLocation" maxlength="60" placeholder="Tuliskan lokasi kerja" value="${escapeHtml(state.locationOther)}"></div>
   </div>
-  <div class="tip-card"><div class="tip-icon">?</div><div><strong>Penilaian yang jujur adalah langkah awal perubahan.</strong><p>Survei ini tidak meminta NRP maupun nomor kontak. Pilih N/A pada layanan yang belum pernah Anda gunakan. Mohon mengisi survei satu kali per periode.</p></div></div>`;
+  <div class="tip-card"><div class="tip-icon">&#10035;</div><div><strong>Penilaian yang jujur adalah langkah awal perubahan.</strong><p>Survei ini tidak meminta NRP maupun nomor kontak. Pilih N/A pada layanan yang belum pernah Anda gunakan. Mohon mengisi survei satu kali per periode.</p></div></div>`;
 }
 function ratingHtml(id,index, label){
   const selected=state.ratings[id];
@@ -49,16 +49,16 @@ function openQuestionHtml(id,index,label){
 }
 function questionsHtml(groups){
   const all=GROUPS.flatMap(g=>g.questions);
-  return `<div class="tip-card" style="margin:0 0 25px"><span class="tip-icon">?</span><div><strong>Gunakan skala 1 sampai 6</strong><p>Pilih nilai sesuai pengalaman Anda. Bila tidak pernah menggunakan layanan tersebut, pilih N/A (tidak relevan).</p></div></div>`+groups.map(group=>`<div class="group-block"><div class="group-head"><span class="group-icon">${icon(group.icon,21)}</span><div><span class="eyebrow-small">ASPEK ${group.number}</span><h3>${group.title}</h3><p>${group.subtitle}</p></div></div>${group.questions.map(([id,text,type])=>type==='text'?openQuestionHtml(id,all.findIndex(q=>q[0]===id),text):ratingHtml(id,all.findIndex(q=>q[0]===id),text)).join('')}</div>`).join('');
+  return `<div class="tip-card" style="margin:0 0 25px"><span class="tip-icon">&#9678;</span><div><strong>Gunakan skala 1 sampai 6</strong><p>Pilih nilai sesuai pengalaman Anda. Bila tidak pernah menggunakan layanan tersebut, pilih N/A (tidak relevan).</p></div></div>`+groups.map(group=>`<div class="group-block"><div class="group-head"><span class="group-icon">${icon(group.icon,21)}</span><div><span class="eyebrow-small">ASPEK ${group.number}</span><h3>${group.title}</h3><p>${group.subtitle}</p></div></div>${group.questions.map(([id,text,type])=>type==='text'?openQuestionHtml(id,all.findIndex(q=>q[0]===id),text):ratingHtml(id,all.findIndex(q=>q[0]===id),text)).join('')}</div>`).join('');
 }
 function feedbackHtml(){
-  return `<div class="overall-question"><h3>Secara keseluruhan, seberapa puas Anda terhadap layanan IT SJR?</h3><p>Nilai ini menjadi dasar utama penghitungan Customer Satisfaction Score (CSAT).</p><div class="overall-rating" role="radiogroup" aria-label="Kepuasan keseluruhan">${[1,2,3,4,5,6].map(num=>`<label class="overall-item ${state.overall===num?'selected':''}"><input type="radio" name="overall" value="${num}" ${state.overall===num?'checked':''}><span class="star">?</span><b>${num}</b><small>${RATING_LABELS[num-1]}</small></label>`).join('')}</div></div>
+  return `<div class="overall-question"><h3>Secara keseluruhan, seberapa puas Anda terhadap layanan IT SJR?</h3><p>Nilai ini menjadi dasar utama penghitungan Customer Satisfaction Score (CSAT).</p><div class="overall-rating" role="radiogroup" aria-label="Kepuasan keseluruhan">${[1,2,3,4,5,6].map(num=>`<label class="overall-item ${state.overall===num?'selected':''}"><input type="radio" name="overall" value="${num}" ${state.overall===num?'checked':''}><span class="star">&#9733;</span><b>${num}</b><small>${RATING_LABELS[num-1]}</small></label>`).join('')}</div></div>
     <div class="feedback-grid"><div class="field"><span class="field-title">Seberapa jauh layanan IOT mendukung pekerjaan Anda? <span class="required-star">*</span></span><div class="support-choices">${SUPPORT_OPTIONS.map(o=>`<label><input type="radio" name="support" value="${escapeHtml(o)}" ${state.support===o?'checked':''}> ${escapeHtml(o)}</label>`).join('')}</div></div>
     <div class="field"><label for="issues">Kendala IT yang paling sering Anda alami <span class="optional">(opsional)</span></label><textarea id="issues" maxlength="1000" placeholder="Contoh: koneksi Wi-Fi sering terputus di area kerja...">${escapeHtml(state.issues)}</textarea></div>
     <div class="field"><span class="field-title">Layanan yang paling perlu ditingkatkan <span class="required-star">*</span></span><div class="priority-choices">${PRIORITIES.map(p=>`<label class="priority-item"><input type="radio" name="priority" value="${escapeHtml(p)}" ${state.priority===p?'checked':''}> ${escapeHtml(p)}</label>`).join('')}</div></div>
     <div class="field"><label for="optimizationService">Pelayanan optimalisasi apa yang bisa dibantu oleh Departemen IOT? <span class="optional">(jawaban bebas, opsional)</span></label><textarea id="optimizationService" maxlength="1200" rows="4" placeholder="Contoh: otomatisasi rekap data, dashboard kerja, atau integrasi aplikasi...">${escapeHtml(state.optimizationService)}</textarea></div>
     <div class="field"><label for="suggestion">Saran atau masukan untuk tim IOT <span class="optional">(opsional)</span></label><textarea id="suggestion" maxlength="1500" placeholder="Kami ingin mendengar ide Anda agar layanan IOT semakin baik...">${escapeHtml(state.suggestion)}</textarea></div>
-    <div class="tip-card" style="margin-top:0"><span class="tip-icon">?</span><div><strong>Terima kasih atas masukan Anda.</strong><p>Semua tanggapan akan dirangkum untuk evaluasi dan prioritas improvement tim IOT SJR.</p></div></div></div>
+    <div class="tip-card" style="margin-top:0"><span class="tip-icon">&#9678;</span><div><strong>Terima kasih atas masukan Anda.</strong><p>Semua tanggapan akan dirangkum untuk evaluasi dan prioritas improvement tim IOT SJR.</p></div></div></div>
     <div aria-hidden="true" hidden><label for="companyWebsite">Website perusahaan</label><input id="companyWebsite" autocomplete="off" tabindex="-1" value="${escapeHtml(state.companyWebsite)}"></div>`;
 }
 function bindFields(){
@@ -113,7 +113,7 @@ async function submit(){
     if(!response.ok)throw new Error(body.error || 'Server belum siap. Pastikan Vercel Blob terhubung ke proyek.');
     $('surveyShell').hidden=true;
     $('successPanel').hidden=false;
-    $('successPanel').innerHTML=`<div class="success-icon">?</div><span class="eyebrow-small">SUBMISSION SUCCESSFUL</span><h2>Terima kasih banyak!</h2><p>Penilaian Anda berhasil tercatat. Setiap suara membantu tim IOT SJR bekerja lebih baik untuk semua karyawan.</p><button type="button" class="btn btn-primary" id="restartSurvey">Isi Survei Lagi ?</button>`;
+    $('successPanel').innerHTML=`<div class="success-icon">&#10003;</div><span class="eyebrow-small">SUBMISSION SUCCESSFUL</span><h2>Terima kasih banyak!</h2><p>Penilaian Anda berhasil tercatat. Setiap suara membantu tim IOT SJR bekerja lebih baik untuk semua karyawan.</p><button type="button" class="btn btn-primary" id="restartSurvey">Isi Survei Lagi &#8594;</button>`;
     $('restartSurvey').addEventListener('click',()=>location.reload());
     window.scrollTo({top:170,behavior:'smooth'});
   }catch(error){showError(error.message || 'Gagal mengirim. Coba lagi.');}
