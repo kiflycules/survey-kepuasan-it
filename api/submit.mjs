@@ -1,3 +1,4 @@
+
 import { put } from '@vercel/blob';
 import { randomUUID } from 'node:crypto';
 import { QUESTION_IDS, OPEN_QUESTION_IDS, SUPPORT_OPTIONS, PRIORITIES } from '../public/assets/questions.js';
@@ -14,13 +15,16 @@ async function handle(request) {
   if(raw.length>12000)return json({error:'Ukuran jawaban terlalu besar.'},413);
   let body;try{body=JSON.parse(raw);}catch{return json({error:'Data formulir tidak valid.'},400);}
   if(!body || typeof body!=='object' || Array.isArray(body))return json({error:'Data formulir tidak valid.'},400);
-  if(clean(body.companyWebsite,200))return json({ok:true,message:'Terima kasih atas masukan Anda.'}); // anti-spam honeypot
+  if(clean(body.companyWebsite,200))return json({ok:true,message:'Terima kasih atas masukan Anda.'});
   const department=clean(body.department,60), location=clean(body.location,60), name=clean(body.name,80);
-  const support=clean(body.support,40), priority=clean(body.priority,100);
+  const support=clean(body.support,40), priority=clean(body.priority,100), priorityOther=clean(body.priorityOther,1000);
   const issues=clean(body.issues,1000), suggestion=clean(body.suggestion,1500), optimizationService=clean(body.optimizationService,1200);
   const overall=body.overall;
   if(!department || !location || !Number.isInteger(overall) || overall<1 || overall>6 || !SUPPORT_OPTIONS.includes(support) || !PRIORITIES.includes(priority)) {
     return json({error:'Mohon lengkapi identitas kerja dan penilaian akhir.'},400);
+  }
+  if(priority==='Lainnya' && !priorityOther){
+    return json({error:'Mohon jelaskan layanan lainnya yang perlu ditingkatkan.'},400);
   }
   const input=body.ratings;
   if(!input || typeof input!=='object' || Array.isArray(input) || Object.keys(input).length!==QUESTION_IDS.length || !QUESTION_IDS.every(id=>Number.isInteger(input[id]) && input[id]>=0 && input[id]<=6)){
@@ -36,7 +40,7 @@ async function handle(request) {
     const id=randomUUID();
     await put(`answer/${monthWita}/${now.toISOString()}-${id}.json`,JSON.stringify({
       id,rating_scale:6,schema_version:2,created_at:now.toISOString(),name:name||null,department,location,ratings,openAnswers,
-      overall,support,issues:issues||null,priority,optimizationService:optimizationService||null,suggestion:suggestion||null
+      overall,support,issues:issues||null,priority,priorityOther:priority==='Lainnya'?priorityOther:null,optimizationService:optimizationService||null,suggestion:suggestion||null
     }),{access:'private',contentType:'application/json',addRandomSuffix:false});
     return json({ok:true,message:'Jawaban berhasil disimpan.'},201);
   }catch(error){
