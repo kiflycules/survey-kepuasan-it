@@ -1,3 +1,4 @@
+
 import { GROUPS, DEPARTMENTS, LOCATIONS } from './questions.js';
 const $=id=>document.getElementById(id);
 const escapeHtml=str=>String(str??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -102,14 +103,16 @@ function renderFeedback(){
     ['Kendala',r=>r.issues],
     ['Pengembangan teknologi',r=>r.openAnswers?.t2],
     ['Usulan optimasi departemen',r=>r.openAnswers?.o3],
-    ['Pelayanan optimalisasi yang dibutuhkan',r=>r.optimizationService]
+    ['Pelayanan optimalisasi yang dibutuhkan',r=>r.optimizationService],
+    ['Layanan lainnya yang perlu ditingkatkan',r=>r.priority==='Lainnya'?r.priorityOther:null]
   ];
   const feedback=rows.map(r=>({r,items:comments.map(([label,fn])=>({label,value:fn(r)})).filter(x=>x.value)})).filter(x=>x.items.length);
   $('feedbackCount').textContent=`${feedback.length} tanggapan`;
   $('feedbackList').innerHTML=feedback.length?feedback.slice(0,30).map(({r,items})=>`<article class="feedback-item">${items.map(item=>`<p class="feedback-quote"><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(item.value)}</p>`).join('')}<div class="feedback-meta"><strong>${escapeHtml(r.department)}</strong><span>· ${escapeHtml(r.location)}</span><span>· ${escapeHtml(dateFormat(r.created_at))}</span></div></article>`).join(''):empty('Belum ada saran atau masukan yang ditulis.');
 }
+const priorityText = r => r.priority==='Lainnya' && r.priorityOther ? `Lainnya: ${r.priorityOther}` : (r.priority || '—');
 function renderTable(){
-  $('responseRows').innerHTML=rows.length?rows.slice(0,60).map(r=>`<tr><td>${escapeHtml(dateFormat(r.created_at))}</td><td>${escapeHtml(r.name||'Anonim')}</td><td>${escapeHtml(r.department)}</td><td>${escapeHtml(r.location)}</td><td><span class="score-badge ${r.overall<3?'low':r.overall===3?'mid':''}">${r.overall} / 6</span></td><td title="${escapeHtml(r.priority||'')}">${escapeHtml(r.priority||'—')}</td></tr>`).join(''):`<tr><td colspan="6" class="empty-table">Belum ada jawaban yang tercatat.</td></tr>`;
+  $('responseRows').innerHTML=rows.length?rows.slice(0,60).map(r=>`<tr><td>${escapeHtml(dateFormat(r.created_at))}</td><td>${escapeHtml(r.name||'Anonim')}</td><td>${escapeHtml(r.department)}</td><td>${escapeHtml(r.location)}</td><td><span class="score-badge ${r.overall<3?'low':r.overall===3?'mid':''}">${r.overall} / 6</span></td><td title="${escapeHtml(priorityText(r))}">${escapeHtml(priorityText(r))}</td></tr>`).join(''):`<tr><td colspan="6" class="empty-table">Belum ada jawaban yang tercatat.</td></tr>`;
   const foot=document.querySelector('.table-footnote');foot.textContent=`Menampilkan ${Math.min(rows.length,60)} baris pertama. Ekspor CSV memuat ${rows.length} jawaban hasil filter${truncated?' (batas maksimum 3.000)':''}.`;
 }
 function csvSafe(value){let s=String(value??'');if(/^\s*[=+\-@]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';}
@@ -117,7 +120,7 @@ function exportCsv(){
   if(!rows.length){notice('Tidak ada data untuk diekspor.');return;}
   const cols=[['Tanggal WITA',r=>dateFormat(r.created_at)],['Nama',r=>r.name||'Anonim'],['Departemen',r=>r.department],['Lokasi',r=>r.location],
     ...GROUPS.flatMap(g=>g.questions.map(([id,label,type])=>[`${g.title}: ${label}`,r=>type==='text'?(r.openAnswers?.[id]||''):(r.ratings?.[id]===0?'N/A':(r.ratings?.[id]??''))])),
-    ['Nilai Kepuasan Keseluruhan (1-6)',r=>r.overall],['Dukungan IOT',r=>r.support],['Kendala',r=>r.issues],['Prioritas Perbaikan',r=>r.priority],['Pelayanan Optimalisasi dari IOT',r=>r.optimizationService],['Saran untuk IOT',r=>r.suggestion]];
+    ['Nilai Kepuasan Keseluruhan (1-6)',r=>r.overall],['Dukungan IOT',r=>r.support],['Kendala',r=>r.issues],['Prioritas Perbaikan',r=>r.priority],['Detail Pilihan Lainnya',r=>r.priorityOther],['Pelayanan Optimalisasi dari IOT',r=>r.optimizationService],['Saran untuk IOT',r=>r.suggestion]];
   const data=[cols.map(c=>csvSafe(c[0])).join(','),...rows.map(r=>cols.map(c=>csvSafe(c[1](r))).join(','))].join('\r\n');
   const blob=new Blob(['\uFEFF'+data],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=`SJR_IT_Survey_${new Date().toISOString().slice(0,10)}.csv`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
