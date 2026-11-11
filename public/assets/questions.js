@@ -62,11 +62,19 @@ export const QUESTION_IDS = GROUPS.flatMap(group => group.questions.filter(q => 
 export const OPEN_QUESTION_IDS = GROUPS.flatMap(group => group.questions.filter(q => q[2] === 'text').map(item => item[0]));
 export const DEPARTMENTS = ['DEPT HCGS', 'DEPT SHE', 'DEPT MET', 'DEPT PCM', 'DEPT GEE', 'DEPT MSM', 'DEPT CSR', 'DEPT FAC', 'DEPT CPMD', 'DEPT IOT', 'DEPT COLE', 'Lainnya'];
 export const LOCATIONS = ['HO', 'SITE'];
+
 export const PRIORITIES = [
-  'Kecepatan respons dan penanganan', 'Kualitas jaringan internet / Wi-Fi',
-  'Komputer, laptop, dan printer', 'Aplikasi dan sistem internal',
-  'Komunikasi dan koordinasi tim IT', 'CCTV dan perangkat pendukung', 'Lainnya'
+  'Kecepatan respons dan penanganan',
+  'Kualitas jaringan internet / Wi-Fi',
+  'Komputer, laptop, dan printer',
+  'Aplikasi dan sistem internal',
+  'Komunikasi dan koordinasi tim IT',
+  'CCTV dan perangkat pendukung',
+  'Pelayanan Optimalisasi',
+  'Penerapan Teknologi',
+  'Lainnya'
 ];
+
 export const SUPPORT_OPTIONS = ['Sangat Mendukung', 'Mendukung', 'Cukup Mendukung', 'Kurang Mendukung', 'Tidak Mendukung'];
 export const RATING_LABELS = ['Sangat Tidak Puas', 'Tidak Puas', 'Cukup Puas', 'Puas', 'Puas Sekali', 'Sangat Puas'];
 export const ICONS = {
