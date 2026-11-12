@@ -151,7 +151,7 @@
 /* ===== Background halaman pakai gambar pabrik ===== */
 body {
   background:
-    linear-gradient(rgba(245, 248, 249, 0.78), rgba(245, 248, 249, 0.78)),
+    linear-gradient(rgba(245, 248, 249, 0.55), rgba(245, 248, 249, 0.55)),
     url('/assets/bg-pabrik.jpg') center center / cover no-repeat fixed;
 }
 
