@@ -146,3 +146,31 @@
 .distribution-row:nth-child(6) .distribution-track span {
   background: #138d78;
 }
+
+
+/* ===== Background halaman pakai gambar pabrik ===== */
+body {
+  background:
+    linear-gradient(rgba(245, 248, 249, 0.78), rgba(245, 248, 249, 0.78)),
+    url('/assets/bg-pabrik.jpg') center center / cover no-repeat fixed;
+}
+
+/* Supaya panel tetap enak dibaca */
+.hero-card,
+.survey-shell,
+.topbar,
+.admin-shell,
+.login-card,
+.dashboard-panel {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Optional: biar konten terlihat lebih mewah */
+.hero-card,
+.survey-shell,
+.login-card,
+.dashboard-panel {
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.10);
+}
