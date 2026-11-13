@@ -27,7 +27,7 @@ export const GROUPS = [
     id: 'infrastruktur', number: '04', title: 'Infrastruktur & perangkat', subtitle: 'Konektivitas dan dukungan perangkat kerja', icon: 'wifi',
     questions: [
       ['i1', 'Kualitas dan kestabilan internet / Wi-Fi di area kerja'],
-      ['i2', 'Dukungan teknis komputer, laptop, dan printer'],
+      ['i2', 'Dukungan teknis komputer dan laptop'],
       ['i3', 'Penanganan gangguan jaringan dan konektivitas'],
       ['i4', 'Dukungan teknis CCTV dan perangkat IT lainnya']
     ]
@@ -39,17 +39,42 @@ export const GROUPS = [
       ['a2', 'Penanganan kendala pada aplikasi atau sistem internal'],
       ['a3', 'Pengelolaan akun, akses sistem, dan kebutuhan IT lainnya']
     ]
+  },
+  {
+    id: 'teknologi', number: '06', title: 'Teknologi', subtitle: 'Penerapan dan pengembangan teknologi PT SJR', icon: 'spark',
+    questions: [
+      ['t1', 'Bagaimana tingkat kepuasan Anda terhadap penerapan teknologi PT SJR?'],
+      ['t2', 'Menurut Anda, teknologi apa yang perlu dikembangkan di departemen Anda?', 'text']
+    ]
+  },
+  {
+    id: 'optimasi', number: '07', title: 'Optimasi', subtitle: 'Dukungan data, informasi, dan optimalisasi oleh Departemen IOT', icon: 'chart',
+    questions: [
+      ['o1', 'Bagaimana dukungan Departemen IOT dalam delivery data/informasi?'],
+      ['o2', 'Bagaimana respons Departemen IOT dalam delivery data atau kebutuhan departemen terkait?'],
+      ['o3', 'Optimasi apa di departemen Anda yang dapat diberikan oleh Departemen IOT?', 'text'],
+      ['o4', 'Bagaimana tingkat kepuasan Anda terhadap Departemen IOT dalam delivery data/informasi?']
+    ]
   }
 ];
 
-export const QUESTION_IDS = GROUPS.flatMap(group => group.questions.map(item => item[0]));
+export const QUESTION_IDS = GROUPS.flatMap(group => group.questions.filter(q => q[2] !== 'text').map(item => item[0]));
+export const OPEN_QUESTION_IDS = GROUPS.flatMap(group => group.questions.filter(q => q[2] === 'text').map(item => item[0]));
 export const DEPARTMENTS = ['DEPT HCGS', 'DEPT SHE', 'DEPT MET', 'DEPT PCM', 'DEPT GEE', 'DEPT MSM', 'DEPT CSR', 'DEPT FAC', 'DEPT CPMD', 'DEPT IOT', 'DEPT COLE', 'Lainnya'];
 export const LOCATIONS = ['HO', 'SITE'];
+
 export const PRIORITIES = [
-  'Kecepatan respons dan penanganan', 'Kualitas jaringan internet / Wi-Fi',
-  'Komputer, laptop, dan printer', 'Aplikasi dan sistem internal',
-  'Komunikasi dan koordinasi tim IT', 'CCTV dan perangkat pendukung', 'Lainnya'
+  'Kecepatan respons dan penanganan',
+  'Kualitas jaringan internet / Wi-Fi',
+  'Komputer, laptop, dan printer',
+  'Aplikasi dan sistem internal',
+  'Komunikasi dan koordinasi tim IT',
+  'CCTV dan perangkat pendukung',
+  'Pelayanan Optimalisasi',
+  'Penerapan Teknologi',
+  'Lainnya'
 ];
+
 export const SUPPORT_OPTIONS = ['Sangat Mendukung', 'Mendukung', 'Cukup Mendukung', 'Kurang Mendukung', 'Tidak Mendukung'];
 export const RATING_LABELS = ['Sangat Tidak Puas', 'Tidak Puas', 'Cukup Puas', 'Puas', 'Puas Sekali', 'Sangat Puas'];
 export const ICONS = {
