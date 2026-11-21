@@ -1,4 +1,3 @@
-
 import { GROUPS, DEPARTMENTS, LOCATIONS } from './questions.js';
 const $=id=>document.getElementById(id);
 const escapeHtml=str=>String(str??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -112,7 +111,10 @@ function renderFeedback(){
 }
 const priorityText = r => r.priority==='Lainnya' && r.priorityOther ? `Lainnya: ${r.priorityOther}` : (r.priority || '—');
 function renderTable(){
-  $('responseRows').innerHTML=rows.length?rows.slice(0,60).map(r=>`<tr><td>${escapeHtml(dateFormat(r.created_at))}</td><td>${escapeHtml(r.name||'Anonim')}</td><td>${escapeHtml(r.department)}</td><td>${escapeHtml(r.location)}</td><td><span class="score-badge ${r.overall<3?'low':r.overall===3?'mid':''}">${r.overall} / 6</span></td><td title="${escapeHtml(priorityText(r))}">${escapeHtml(priorityText(r))}</td></tr>`).join(''):`<tr><td colspan="6" class="empty-table">Belum ada jawaban yang tercatat.</td></tr>`;
+  // Tambah kolom Aksi tanpa perlu mengubah admin.html atau styles.css.
+  const header=document.querySelector('.responses-table thead tr');
+  if(header && !header.querySelector('[data-delete-column]'))header.insertAdjacentHTML('beforeend','<th data-delete-column="true">Aksi</th>');
+  $('responseRows').innerHTML=rows.length?rows.slice(0,60).map((r,index)=>`<tr><td>${escapeHtml(dateFormat(r.created_at))}</td><td>${escapeHtml(r.name||'Anonim')}</td><td>${escapeHtml(r.department)}</td><td>${escapeHtml(r.location)}</td><td><span class="score-badge ${r.overall<3?'low':r.overall===3?'mid':''}">${r.overall} / 6</span></td><td title="${escapeHtml(priorityText(r))}">${escapeHtml(priorityText(r))}</td><td><button type="button" class="btn btn-outline delete-response-btn" data-index="${index}" style="padding:7px 12px;color:#a83232;border-color:#e9b4b4;white-space:nowrap;" ${r.id&&r.created_at?'':'disabled title="Data lama tanpa ID tidak dapat dihapus dari tabel"'}>Hapus</button></td></tr>`).join(''):`<tr><td colspan="7" class="empty-table">Belum ada jawaban yang tercatat.</td></tr>`;
   const foot=document.querySelector('.table-footnote');foot.textContent=`Menampilkan ${Math.min(rows.length,60)} baris pertama. Ekspor CSV memuat ${rows.length} jawaban hasil filter${truncated?' (batas maksimum 3.000)':''}.`;
 }
 function csvSafe(value){let s=String(value??'');if(/^\s*[=+\-@]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';}
@@ -135,5 +137,26 @@ $('loginForm').addEventListener('submit',async e=>{
 });
 $('logoutBtn').addEventListener('click',async()=>{try{await requestAdmin('/api/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'logout'})});}catch{}rows=[];showLogin();});
 $('exportBtn').addEventListener('click',exportCsv);
+// Penghapusan satu respons harus dikonfirmasi dan dilakukan di server.
+$('responseRows').addEventListener('click',async event=>{
+  const button=event.target.closest('.delete-response-btn');
+  if(!button || button.disabled || loading)return;
+  const index=Number(button.dataset.index),record=rows[index];
+  if(!record?.id || !record?.created_at)return;
+  const name=record.name || 'Anonim';
+  if(!window.confirm(`Hapus permanen jawaban ${name} (${dateFormat(record.created_at)})?\n\nTindakan ini tidak dapat dibatalkan.`))return;
+  button.disabled=true;
+  try{
+    await requestAdmin('/api/admin',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'delete-response',id:record.id,created_at:record.created_at})
+    });
+    await loadData();
+    notice('Jawaban berhasil dihapus. Grafik dan jumlah responden sudah diperbarui.');
+  }catch(error){
+    if(error.status===401)showLogin('Sesi admin telah berakhir. Silakan masuk kembali.');
+    else notice(error.message || 'Gagal menghapus jawaban.');
+  }finally{if(button.isConnected)button.disabled=false;}
+});
 setupFilters();
 (async()=>{try{await requestAdmin('/api/admin');showDashboard();await loadData();}catch(error){showLogin(error.status===401?'':error.message);}})();
