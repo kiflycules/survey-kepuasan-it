@@ -1,353 +1,162 @@
+import { GROUPS, DEPARTMENTS, LOCATIONS } from './questions.js';
+const $=id=>document.getElementById(id);
+const escapeHtml=str=>String(str??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const dateFormat=(dt)=>{try{return new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Makassar',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(dt))+' WITA';}catch{return '—';}};
+const monthFormat=(date)=>new Intl.DateTimeFormat('id-ID',{month:'short',year:'2-digit',timeZone:'Asia/Makassar'}).format(new Date(date));
+const percent=(a,b)=>b?Math.round(100*a/b):0;
+let rows=[];
+let truncated=false;
+let loading=false;
 
-import { list, get, del } from '@vercel/blob';
-import { createHmac, createHash, timingSafeEqual } from 'node:crypto';
-
-const H = {
-  'Content-Type': 'application/json; charset=utf-8',
-  'Cache-Control': 'no-store',
-  'X-Content-Type-Options': 'nosniff'
-};
-
-const COOKIE = 'sjr_it_session';
-
-const json = (data, status = 200, extra = {}) =>
-  new Response(JSON.stringify(data), {
-    status,
-    headers: { ...H, ...extra }
-  });
-
-const authReady = () =>
-  Boolean(
-    process.env.ADMIN_PASSWORD?.length >= 12 &&
-    process.env.ADMIN_SESSION_SECRET?.length >= 32
-  );
-
-const same = (a, b) =>
-  timingSafeEqual(
-    createHash('sha256').update(a).digest(),
-    createHash('sha256').update(b).digest()
-  );
-
-const mac = payload =>
-  createHmac('sha256', process.env.ADMIN_SESSION_SECRET)
-    .update(payload)
-    .digest('base64url');
-
-function sessionCookie(request) {
-  const match = (request.headers.get('cookie') || '')
-    .split(';')
-    .map(x => x.trim())
-    .find(x => x.startsWith(`${COOKIE}=`));
-
-  if (!match) return false;
-
-  const token = match.slice(COOKIE.length + 1);
-  const split = token.lastIndexOf('.');
-
-  if (split < 0) return false;
-
-  const data = token.slice(0, split);
-  const sig = token.slice(split + 1);
-
-  if (!same(mac(data), sig)) return false;
-
-  try {
-    const content = JSON.parse(
-      Buffer.from(data, 'base64url').toString()
-    );
-
-    return (
-      content.v === 1 &&
-      Number.isFinite(content.exp) &&
-      content.exp > Date.now() &&
-      content.exp < Date.now() + 86400000
-    );
-  } catch {
-    return false;
-  }
+function showLogin(message=''){
+  $('loginPanel').hidden=false;$('dashboardPanel').hidden=true;
+  $('loginError').hidden=!message;$('loginError').textContent=message;
 }
-
-function createCookie() {
-  const value = Buffer.from(
-    JSON.stringify({
-      v: 1,
-      exp: Date.now() + 8 * 3600 * 1000
-    })
-  ).toString('base64url');
-
-  return `${COOKIE}=${value}.${mac(value)}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=28800`;
+function showDashboard(){$('loginPanel').hidden=true;$('dashboardPanel').hidden=false;}
+function notice(message){$('dashboardNotice').textContent=message;$('dashboardNotice').hidden=!message;}
+async function requestAdmin(url,opts={}){
+  const response=await fetch(url,{credentials:'same-origin',cache:'no-store',...opts});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok){const e=new Error(data.error||'Terjadi kesalahan saat mengakses server.');e.status=response.status;throw e;}
+  return data;
 }
-
-const clearCookie = () =>
-  `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`;
-
-const validFilter = (v, max = 80) =>
-  typeof v === 'string' && v.length <= max ? v.trim() : '';
-
-async function handle(request) {
-  if (!authReady()) {
-    return json({
-      error: 'Admin belum dikonfigurasi. Periksa ADMIN_PASSWORD dan ADMIN_SESSION_SECRET.'
-    }, 503);
+function setupFilters(){
+  $('filterDepartment').innerHTML='<option value="">Semua departemen</option>'+DEPARTMENTS.filter(d=>d!=='Lainnya').map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+  $('filterLocation').innerHTML='<option value="">Semua lokasi</option>'+LOCATIONS.filter(d=>d!=='Lainnya').map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+  ['filterDepartment','filterLocation','filterMonth'].forEach(id=>$(id).addEventListener('change',loadData));
+  $('clearFilters').addEventListener('click',()=>{['filterDepartment','filterLocation','filterMonth'].forEach(id=>$(id).value='');loadData();});
+  $('refreshBtn').addEventListener('click',loadData);
+}
+async function loadData(){
+  if(loading)return;
+  loading=true;$('refreshBtn').disabled=true;notice('Memuat data survei…');
+  try{
+    const params=new URLSearchParams();
+    ['Department','Location','Month'].forEach(word=>{const v=$('filter'+word).value.trim();if(v)params.set(word.toLowerCase(),v);});
+    const result=await requestAdmin('/api/admin'+(params.size?'?'+params.toString():''));
+    rows=result.rows||[];truncated=Boolean(result.truncated);
+    notice(truncated?'Menampilkan 3.000 respons terbaru sesuai filter. Gunakan filter untuk mempersempit data saat ekspor.':'');
+    renderDashboard();
+  }catch(error){
+    if(error.status===401){showLogin('Sesi admin telah berakhir. Silakan masuk kembali.');}
+    else notice(error.message);
+  }finally{loading=false;$('refreshBtn').disabled=false;}
+}
+function empty(message='Belum ada data untuk filter ini.') {return `<div class="feedback-empty">${escapeHtml(message)}</div>`;}
+function renderDashboard(){
+  const n=rows.length, happy=rows.filter(r=>r.overall>=4).length;
+  const average=n?rows.reduce((sum,r)=>sum+Number(r.overall),0)/n:0;
+  $('statTotal').textContent=n.toLocaleString('id-ID')+(truncated?'+':'');
+  $('statCsat').textContent=n?`${percent(happy,n)}%`:'—';
+  $('statAvg').textContent=n?`${average.toFixed(2).replace('.',',')} / 6`:'—';
+  $('statHappy').textContent=happy.toLocaleString('id-ID');
+  $('responseCount').textContent=`${n.toLocaleString('id-ID')} jawaban${truncated?' (dibatasi)':''}`;
+  renderAspects();renderDistribution();renderPriorities();renderTrend();renderQuestions();renderFeedback();renderTable();
+}
+function ratingValues(ids){return rows.flatMap(r=>ids.map(id=>Number(r.ratings?.[id]||0)).filter(v=>Number.isInteger(v)&&v>=1&&v<=6));}
+function avg(nums){return nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:0;}
+function renderAspects(){
+  $('aspectBars').innerHTML=GROUPS.map(g=>{
+    const vals=ratingValues(g.questions.filter(q=>q[2]!=='text').map(x=>x[0])),v=avg(vals);
+    return `<div class="aspect-row"><div class="aspect-row-heading"><span>${escapeHtml(g.title)}</span><b>${vals.length?v.toFixed(2).replace('.',','):'N/A'}</b></div><div class="meter-track"><span style="width:${(v/6)*100}%"></span></div></div>`;
+  }).join('');
+}
+function renderDistribution(){
+  const c=[1,2,3,4,5,6].map(num=>rows.filter(r=>r.overall===num).length),max=Math.max(...c,1);
+  $('ratingDistribution').innerHTML=c.map((count,i)=>`<div class="distribution-row"><span class="distribution-label">${i+1} ★</span><div class="distribution-track"><span style="width:${(count/max*100).toFixed(1)}%"></span></div><span class="distribution-number">${count}</span></div>`).join('');
+}
+function renderPriorities(){
+  if(!rows.length){$('priorityList').innerHTML=empty();return;}
+  const counts={};rows.forEach(r=>{if(r.priority)counts[r.priority]=(counts[r.priority]||0)+1;});
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6),max=sorted[0]?.[1]||1;
+  $('priorityList').innerHTML=sorted.map(([name,num],index)=>`<div class="priority-row"><span class="priority-rank">${String(index+1).padStart(2,'0')}</span><div class="priority-info"><span class="priority-label" title="${escapeHtml(name)}">${escapeHtml(name)}</span><div class="priority-track"><span style="width:${num/max*100}%"></span></div></div><span class="priority-count">${num}</span></div>`).join('');
+}
+function renderTrend(){
+  const months=new Map();for(const r of rows){
+    const key=new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',timeZone:'Asia/Makassar'}).format(new Date(r.created_at)).slice(0,7);
+    if(!months.has(key))months.set(key,[]);months.get(key).push(r.overall);
   }
-
-  // LOGIN, LOGOUT, DAN HAPUS JAWABAN
-  if (request.method === 'POST') {
-    const raw = await request.text();
-
-    if (raw.length > 3000) {
-      return json({ error: 'Permintaan terlalu besar.' }, 413);
-    }
-
-    let body;
-    try {
-      body = JSON.parse(raw);
-    } catch {
-      return json({ error: 'Format permintaan tidak valid.' }, 400);
-    }
-
-    if (body?.action === 'logout') {
-      return json(
-        { ok: true },
-        200,
-        { 'Set-Cookie': clearCookie() }
-      );
-    }
-
-    // HAPUS SATU JAWABAN SURVEI
-    if (body?.action === 'delete-response') {
-      if (!sessionCookie(request)) {
-        return json({
-          error: 'Sesi admin tidak valid. Silakan login kembali.'
-        }, 401);
-      }
-
-      const origin = request.headers.get('origin');
-
-      if (origin && origin !== new URL(request.url).origin) {
-        return json({
-          error: 'Asal permintaan tidak diizinkan.'
-        }, 403);
-      }
-
-      if (!(request.headers.get('content-type') || '')
-        .toLowerCase().includes('application/json')) {
-        return json({
-          error: 'Format permintaan tidak valid.'
-        }, 415);
-      }
-
-      const recordId = body.id;
-      const createdAt = body.created_at;
-
-      const validId =
-        typeof recordId === 'string' &&
-        /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(recordId);
-
-      const validDate =
-        typeof createdAt === 'string' &&
-        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(createdAt) &&
-        Number.isFinite(Date.parse(createdAt));
-
-      if (!validId || !validDate ||
-          new Date(createdAt).toISOString() !== createdAt) {
-        return json({
-          error: 'Identitas jawaban tidak valid.'
-        }, 400);
-      }
-
-      const monthWita = new Date(
-        Date.parse(createdAt) + 8 * 60 * 60 * 1000
-      ).toISOString().slice(0, 7);
-
-      const pathname =
-        `answer/${monthWita}/${createdAt}-${recordId}.json`;
-
-      try {
-        const blob = await get(pathname, {
-          access: 'private'
-        });
-
-        if (!blob?.stream) {
-          return json({
-            error: 'Jawaban tidak ditemukan atau sudah dihapus.'
-          }, 404);
-        }
-
-        const record = JSON.parse(
-          await new Response(blob.stream).text()
-        );
-
-        if (record.id !== recordId ||
-            record.created_at !== createdAt) {
-          return json({
-            error: 'Identitas jawaban tidak cocok.'
-          }, 409);
-        }
-
-        await del(pathname);
-
-        return json({
-          ok: true,
-          message: 'Jawaban berhasil dihapus.'
-        });
-
-      } catch (error) {
-        console.error('survey delete response error:', error);
-
-        return json({
-          error: 'Gagal menghapus jawaban. Periksa Vercel Function Logs.'
-        }, 503);
-      }
-    }
-
-    // LOGIN ADMIN
-    if (
-      body?.action !== 'login' ||
-      typeof body.password !== 'string' ||
-      body.password.length > 256
-    ) {
-      return json({
-        error: 'Permintaan tidak valid.'
-      }, 400);
-    }
-
-    if (!same(body.password, process.env.ADMIN_PASSWORD)) {
-      return json({
-        error: 'Kata sandi admin salah.'
-      }, 401);
-    }
-
-    return json(
-      { ok: true },
-      200,
-      { 'Set-Cookie': createCookie() }
-    );
-  }
-
-  // MEMBACA DATA SURVEI
-  if (request.method !== 'GET') {
-    return json({
-      error: 'Metode tidak diperbolehkan.'
-    }, 405);
-  }
-
-  if (!sessionCookie(request)) {
-    return json({
-      error: 'Silakan login sebagai admin.'
-    }, 401);
-  }
-
-  const url = new URL(request.url);
-
-  const department = validFilter(
-    url.searchParams.get('department') || ''
-  );
-
-  const location = validFilter(
-    url.searchParams.get('location') || ''
-  );
-
-  const month = validFilter(
-    url.searchParams.get('month') || '', 7
-  );
-
-  if (month && !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
-    return json({
-      error: 'Format periode harus YYYY-MM.'
-    }, 400);
-  }
-
-  try {
-    const prefix = month
-      ? `answer/${month}/`
-      : 'answer/';
-
-    let cursor;
-    const keys = [];
-
-    do {
-      const page = await list({
-        prefix,
-        limit: 1000,
-        cursor
-      });
-
-      keys.push(...page.blobs.map(x => x.pathname));
-
-      cursor = page.hasMore ? page.cursor : undefined;
-
-    } while (cursor && keys.length < 5000);
-
-    const sorted = keys.sort((a, b) => b.localeCompare(a));
-    const rows = [];
-
-    for (let i = 0; i < sorted.length; i += 15) {
-      const batch = sorted.slice(i, i + 15);
-
-      const values = await Promise.all(
-        batch.map(async pathname => {
-          const blob = await get(pathname, {
-            access: 'private'
-          });
-
-          if (!blob?.stream) return null;
-
-          return JSON.parse(
-            await new Response(blob.stream).text()
-          );
-        })
-      );
-
-      for (const row of values) {
-        if (!row?.created_at) continue;
-        if (department && row.department !== department) continue;
-        if (location && row.location !== location) continue;
-
-        rows.push(row);
-      }
-
-      if (rows.length >= 3000) break;
-    }
-
-    rows.sort((a, b) =>
-      String(b.created_at).localeCompare(String(a.created_at))
-    );
-
-    return json({
-      ok: true,
-      rows: rows.slice(0, 3000),
-      truncated: rows.length > 3000
+  const series=Array.from(months.entries()).sort((a,b)=>a[0].localeCompare(b[0])).slice(-6).map(([key,list])=>({key,val:percent(list.filter(v=>v>=4).length,list.length)}));
+  if(!series.length){$('trendChart').innerHTML='<div class="trend-empty">Grafik akan muncul setelah ada tanggapan.</div>';return;}
+  const W=480,H=206,left=35,right=25,top=22,bottom=36;
+  const X=i=>left+(series.length===1?(W-left-right)/2:i*(W-left-right)/(series.length-1));
+  const Y=v=>top+(100-v)*(H-top-bottom)/100;
+  const pts=series.map((p,i)=>[X(i),Y(p.val)]);
+  const line=pts.map((p,i)=>`${i===0?'M':'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+  const filled=`${line} L${X(series.length-1).toFixed(1)},${H-bottom} L${X(0).toFixed(1)},${H-bottom} Z`;
+  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Grafik tren CSAT per bulan"><defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#37b99a" stop-opacity=".22"/><stop offset="1" stop-color="#37b99a" stop-opacity="0"/></linearGradient></defs>`;
+  [0,25,50,75,100].forEach(v=>{svg+=`<line x1="${left}" x2="${W-right}" y1="${Y(v)}" y2="${Y(v)}" stroke="#edf2f3" stroke-dasharray="3 4"/><text x="${left-9}" y="${Y(v)+4}" text-anchor="end" fill="#a1afb6" font-size="10">${v}</text>`;});
+  svg+=`<path d="${filled}" fill="url(#trendFill)"/><path d="${line}" fill="none" stroke="#1ca489" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  series.forEach((item,i)=>{svg+=`<circle cx="${X(i)}" cy="${Y(item.val)}" r="5" fill="white" stroke="#16a184" stroke-width="3"/><text x="${X(i)}" y="${Y(item.val)-13}" text-anchor="middle" font-size="11" font-weight="700" fill="#159a85">${item.val}%</text><text x="${X(i)}" y="${H-12}" text-anchor="middle" font-size="10" fill="#8499a6">${escapeHtml(monthFormat(item.key+'-01T12:00:00+08:00'))}</text>`;});
+  svg+='</svg>';$('trendChart').innerHTML=svg;
+}
+function renderQuestions(){
+  $('questionRows').innerHTML=GROUPS.flatMap(g=>g.questions.filter(q=>q[2]!=='text').map(([id,label])=>{
+    const values=ratingValues([id]),v=avg(values);
+    return `<div class="question-insight"><div class="question-insight-top"><span>${escapeHtml(label)}</span><b>${values.length?v.toFixed(2).replace('.',','):'—'}</b></div><div class="meter-track"><span style="width:${(v/6)*100}%"></span></div><small>${values.length} penilaian valid · N/A dikecualikan</small></div>`;
+  })).join('');
+}
+function renderFeedback(){
+  const comments=[
+    ['Saran untuk Tim IOT',r=>r.suggestion],
+    ['Kendala',r=>r.issues],
+    ['Pengembangan teknologi',r=>r.openAnswers?.t2],
+    ['Usulan optimasi departemen',r=>r.openAnswers?.o3],
+    ['Pelayanan optimalisasi yang dibutuhkan',r=>r.optimizationService],
+    ['Layanan lainnya yang perlu ditingkatkan',r=>r.priority==='Lainnya'?r.priorityOther:null]
+  ];
+  const feedback=rows.map(r=>({r,items:comments.map(([label,fn])=>({label,value:fn(r)})).filter(x=>x.value)})).filter(x=>x.items.length);
+  $('feedbackCount').textContent=`${feedback.length} tanggapan`;
+  $('feedbackList').innerHTML=feedback.length?feedback.slice(0,30).map(({r,items})=>`<article class="feedback-item">${items.map(item=>`<p class="feedback-quote"><strong>${escapeHtml(item.label)}:</strong> ${escapeHtml(item.value)}</p>`).join('')}<div class="feedback-meta"><strong>${escapeHtml(r.department)}</strong><span>· ${escapeHtml(r.location)}</span><span>· ${escapeHtml(dateFormat(r.created_at))}</span></div></article>`).join(''):empty('Belum ada saran atau masukan yang ditulis.');
+}
+const priorityText = r => r.priority==='Lainnya' && r.priorityOther ? `Lainnya: ${r.priorityOther}` : (r.priority || '—');
+function renderTable(){
+  // Tambah kolom Aksi tanpa perlu mengubah admin.html atau styles.css.
+  const header=document.querySelector('.responses-table thead tr');
+  if(header && !header.querySelector('[data-delete-column]'))header.insertAdjacentHTML('beforeend','<th data-delete-column="true">Aksi</th>');
+  $('responseRows').innerHTML=rows.length?rows.slice(0,60).map((r,index)=>`<tr><td>${escapeHtml(dateFormat(r.created_at))}</td><td>${escapeHtml(r.name||'Anonim')}</td><td>${escapeHtml(r.department)}</td><td>${escapeHtml(r.location)}</td><td><span class="score-badge ${r.overall<3?'low':r.overall===3?'mid':''}">${r.overall} / 6</span></td><td title="${escapeHtml(priorityText(r))}">${escapeHtml(priorityText(r))}</td><td><button type="button" class="btn btn-outline delete-response-btn" data-index="${index}" style="padding:7px 12px;color:#a83232;border-color:#e9b4b4;white-space:nowrap;" ${r.id&&r.created_at?'':'disabled title="Data lama tanpa ID tidak dapat dihapus dari tabel"'}>Hapus</button></td></tr>`).join(''):`<tr><td colspan="7" class="empty-table">Belum ada jawaban yang tercatat.</td></tr>`;
+  const foot=document.querySelector('.table-footnote');foot.textContent=`Menampilkan ${Math.min(rows.length,60)} baris pertama. Ekspor CSV memuat ${rows.length} jawaban hasil filter${truncated?' (batas maksimum 3.000)':''}.`;
+}
+function csvSafe(value){let s=String(value??'');if(/^\s*[=+\-@]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';}
+function exportCsv(){
+  if(!rows.length){notice('Tidak ada data untuk diekspor.');return;}
+  const cols=[['Tanggal WITA',r=>dateFormat(r.created_at)],['Nama',r=>r.name||'Anonim'],['Departemen',r=>r.department],['Lokasi',r=>r.location],
+    ...GROUPS.flatMap(g=>g.questions.map(([id,label,type])=>[`${g.title}: ${label}`,r=>type==='text'?(r.openAnswers?.[id]||''):(r.ratings?.[id]===0?'N/A':(r.ratings?.[id]??''))])),
+    ['Nilai Kepuasan Keseluruhan (1-6)',r=>r.overall],['Dukungan IOT',r=>r.support],['Kendala',r=>r.issues],['Prioritas Perbaikan',r=>r.priority],['Detail Pilihan Lainnya',r=>r.priorityOther],['Pelayanan Optimalisasi dari IOT',r=>r.optimizationService],['Saran untuk IOT',r=>r.suggestion]];
+  const data=[cols.map(c=>csvSafe(c[0])).join(','),...rows.map(r=>cols.map(c=>csvSafe(c[1](r))).join(','))].join('\r\n');
+  const blob=new Blob(['\uFEFF'+data],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`SJR_IT_Survey_${new Date().toISOString().slice(0,10)}.csv`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+$('loginForm').addEventListener('submit',async e=>{
+  e.preventDefault();$('loginBtn').disabled=true;$('loginError').hidden=true;
+  try{
+    await requestAdmin('/api/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'login',password:$('adminPassword').value})});
+    $('adminPassword').value='';showDashboard();await loadData();
+  }catch(error){showLogin(error.message);}
+  finally{$('loginBtn').disabled=false;}
+});
+$('logoutBtn').addEventListener('click',async()=>{try{await requestAdmin('/api/admin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'logout'})});}catch{}rows=[];showLogin();});
+$('exportBtn').addEventListener('click',exportCsv);
+// Penghapusan satu respons harus dikonfirmasi dan dilakukan di server.
+$('responseRows').addEventListener('click',async event=>{
+  const button=event.target.closest('.delete-response-btn');
+  if(!button || button.disabled || loading)return;
+  const index=Number(button.dataset.index),record=rows[index];
+  if(!record?.id || !record?.created_at)return;
+  const name=record.name || 'Anonim';
+  if(!window.confirm(`Hapus permanen jawaban ${name} (${dateFormat(record.created_at)})?\n\nTindakan ini tidak dapat dibatalkan.`))return;
+  button.disabled=true;
+  try{
+    await requestAdmin('/api/admin',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'delete-response',id:record.id,created_at:record.created_at})
     });
-
-  } catch (error) {
-    console.error('survey admin blobs error:', error);
-
-    return json({
-      error: 'Gagal membaca jawaban. Periksa Vercel Blob Store dan Function Logs.'
-    }, 503);
-  }
-}
-
-export default async function handler(req, res) {
-  const request = new Request(
-    `https://${req.headers.host || 'localhost'}${req.url}`,
-    {
-      method: req.method,
-      headers: req.headers,
-      body: req.method === 'GET' || req.method === 'HEAD'
-        ? undefined
-        : JSON.stringify(req.body || {})
-    }
-  );
-
-  const response = await handle(request);
-
-  res.status(response.status);
-
-  response.headers.forEach((value, key) =>
-    res.setHeader(key, value)
-  );
-
-  res.send(await response.text());
-}
+    await loadData();
+    notice('Jawaban berhasil dihapus. Grafik dan jumlah responden sudah diperbarui.');
+  }catch(error){
+    if(error.status===401)showLogin('Sesi admin telah berakhir. Silakan masuk kembali.');
+    else notice(error.message || 'Gagal menghapus jawaban.');
+  }finally{if(button.isConnected)button.disabled=false;}
+});
+setupFilters();
+(async()=>{try{await requestAdmin('/api/admin');showDashboard();await loadData();}catch(error){showLogin(error.status===401?'':error.message);}})();
