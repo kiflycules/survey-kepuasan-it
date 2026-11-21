@@ -18,6 +18,24 @@ const stepDescriptions = [
 ];
 const $ = id => document.getElementById(id);
 const escapeHtml = str => String(str ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+// Hanya aktif bila survei dibuka dari HCGS Solution.
+// Cocokkan alamat kembali dengan origin halaman yang membuka survei
+// untuk mencegah pengalihan ke situs arbitrer.
+function getHcgsReturnUrl(){
+  const raw = new URLSearchParams(window.location.search).get('return_to');
+  if(!raw || raw.length > 600 || !document.referrer)return null;
+  try{
+    const target = new URL(raw);
+    const source = new URL(document.referrer);
+    if(target.protocol !== 'https:' && !(target.protocol === 'http:' && target.hostname === 'localhost'))return null;
+    if(target.origin !== source.origin || target.username || target.password || target.hash)return null;
+    if(target.pathname !== '/tickets/new')return null;
+    if(target.searchParams.get('survey_return') !== '1' || [...target.searchParams.keys()].length !== 1)return null;
+    return target.href;
+  }catch{return null;}
+}
+const hcgsReturnUrl = getHcgsReturnUrl();
+
 
 function optionsHtml(items, selected, placeholder) {
   return `<option value="">${escapeHtml(placeholder)}</option>` + items.map(item => `<option value="${escapeHtml(item)}" ${selected===item?'selected':''}>${escapeHtml(item)}</option>`).join('');
@@ -116,8 +134,13 @@ async function submit(){
     if(!response.ok)throw new Error(body.error || 'Server belum siap. Pastikan Vercel Blob terhubung ke proyek.');
     $('surveyShell').hidden=true;
     $('successPanel').hidden=false;
-    $('successPanel').innerHTML=`<div class="success-icon">&#10003;</div><span class="eyebrow-small">SUBMISSION SUCCESSFUL</span><h2>Terima kasih banyak!</h2><p>Penilaian Anda berhasil tercatat. Setiap suara membantu tim IOT SJR bekerja lebih baik untuk semua karyawan.</p><button type="button" class="btn btn-primary" id="restartSurvey">Isi Survei Lagi &#8594;</button>`;
-    $('restartSurvey').addEventListener('click',()=>location.reload());
+    $('successPanel').innerHTML=`<div class="success-icon">&#10003;</div><span class="eyebrow-small">SUBMISSION SUCCESSFUL</span><h2>Terima kasih banyak!</h2><p>Penilaian Anda berhasil tercatat. Setiap suara membantu tim IOT SJR bekerja lebih baik untuk semua karyawan.</p>${hcgsReturnUrl ? '<p>Anda akan diarahkan kembali ke HCGS Solution untuk melanjutkan pengajuan komplain.</p><a class="btn btn-primary" id="backToComplaint" href="'+escapeHtml(hcgsReturnUrl)+'">Kembali ke HCGS Solution &#8594;</a>' : '<button type="button" class="btn btn-primary" id="restartSurvey">Isi Survei Lagi &#8594;</button>'}`;
+    if(hcgsReturnUrl){
+      // Hanya kembali setelah server mengonfirmasi jawaban berhasil tersimpan.
+      setTimeout(()=>window.location.assign(hcgsReturnUrl),2000);
+    }else{
+      $('restartSurvey').addEventListener('click',()=>location.reload());
+    }
     window.scrollTo({top:170,behavior:'smooth'});
   }catch(error){showError(error.message || 'Gagal mengirim. Coba lagi.');}
   finally{button.disabled=false;if(!$('surveyShell').hidden)button.innerHTML=`Kirim Penilaian ${icon('check',17)}`;}
